@@ -58,3 +58,22 @@ class SignupService():
             kwargs["verified"] = signup_code.email and user.email == signup_code.email
 
         return EmailAddress.objects.add_email(user, user.email, **kwargs)
+
+class SettingsService():
+    @staticmethod
+    def update_email(user, email, previous_email, confirm=None):
+        """ 
+        update a users email address.  email should be just the address
+        while previous_email should be the EmailAddress object of the users
+        existing primary email
+        """
+        if confirm is None:
+            confirm = settings.ACCOUNT_EMAIL_CONFIRMATION_EMAIL
+        # @@@ handle multiple emails per user
+        if not previous_email:
+            user.email = email
+            EmailAddress.objects.add_email(user, email, primary=True, confirm=confirm)
+            user.save()
+        else:
+            if email != previous_email.email:
+                previous_email.change(email, confirm=confirm)
