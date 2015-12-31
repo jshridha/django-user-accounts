@@ -5,8 +5,8 @@ from rest_framework.test import APITestCase
 from django.contrib.auth.models import User
 
 from account.models import Account, EmailAddress, SignupCode
+from account.services import SignupService
 
-import unittest
 class RESTSignupViewTestCase(APITestCase):
 
     def test_post(self):
@@ -142,3 +142,85 @@ class RESTSignupViewTestCase(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertEqual(response.data, {"code":['The code abc123 is invalid.']})
 
+class RESTSettingsViewTestCase(APITestCase):
+    def test_get_not_logged_in(self):
+        url = reverse('account_settings_api')
+
+        response = self.client.get(url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get(self):
+        SignupService.signup('foo', 'foobar@example.com', 'bar')
+        url = reverse('account_settings_api')
+        user = User.objects.get(username='foo')
+        self.client.force_authenticate(user=user)
+
+        response = self.client.get(url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["email"], 'foobar@example.com')
+        self.assertEqual(response.data["language"], 'en-us')
+
+    def test_put(self):
+        SignupService.signup('foo', 'foobar@example.com', 'bar')
+        url = reverse('account_settings_api')
+        user = User.objects.get(username='foo')
+        self.client.force_authenticate(user=user)
+
+        data = {
+            "email": "foobar@example.com",
+            "timezone": "America/Vancouver",
+            "language": "it"
+        }
+
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["email"], 'foobar@example.com')
+        self.assertEqual(response.data["timezone"], 'America/Vancouver')
+        self.assertEqual(response.data["language"], 'it')
+
+    def test_put_email_conflict(self):
+        SignupService.signup('foo', 'foobar@example.com', 'bar')
+        SignupService.signup('foo2', 'foobar2@example.com', 'bar')
+        url = reverse('account_settings_api')
+        user = User.objects.get(username='foo')
+        self.client.force_authenticate(user=user)
+
+        data = {
+            "email": "foobar2@example.com",
+        }
+
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_put_invalid_timezone(self):
+        SignupService.signup('foo', 'foobar@example.com', 'bar')
+        url = reverse('account_settings_api')
+        user = User.objects.get(username='foo')
+        self.client.force_authenticate(user=user)
+
+        data = {
+            "email": "foobar@example.com",
+            "timezone": "NOT_A_TIMEZONE",
+        }
+
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {'timezone': [u'"NOT_A_TIMEZONE" is not a valid choice.']})
+
+    def test_put_invalid_language(self):
+        SignupService.signup('foo', 'foobar@example.com', 'bar')
+        url = reverse('account_settings_api')
+        user = User.objects.get(username='foo')
+        self.client.force_authenticate(user=user)
+
+        data = {
+            "email": "foobar@example.com",
+            "language": "NOT_A_LANGUAGE"
+        }
+
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {'language': [u'"NOT_A_LANGUAGE" is not a valid choice.']})
+        

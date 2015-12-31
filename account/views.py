@@ -684,17 +684,9 @@ class SettingsView(LoginRequiredMixin, FormView):
 
     def update_email(self, form, confirm=None):
         user = self.request.user
-        if confirm is None:
-            confirm = settings.ACCOUNT_EMAIL_CONFIRMATION_EMAIL
-        # @@@ handle multiple emails per user
         email = form.cleaned_data["email"].strip()
-        if not self.primary_email_address:
-            user.email = email
-            EmailAddress.objects.add_email(self.request.user, email, primary=True, confirm=confirm)
-            user.save()
-        else:
-            if email != self.primary_email_address.email:
-                self.primary_email_address.change(email, confirm=confirm)
+
+        SettingsService.update_email(user, email, self.primary_email_address, confirm)
 
     def get_context_data(self, **kwargs):
         ctx = super(SettingsView, self).get_context_data(**kwargs)

@@ -11,7 +11,7 @@ from account.utils import get_user_lookup_kwargs
 
 alnum_re = re.compile(r"^\w+$")
 
-class SignupValidator():
+class Validator():
     @staticmethod
     def clean_username(username):
         if not alnum_re.search(username):

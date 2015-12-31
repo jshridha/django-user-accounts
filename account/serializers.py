@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from account.conf import settings
-from account.validators import SignupValidator
+from account.validators import Validator
 from account.models import SignupCode
 
 class SignupResponseSerializer(serializers.Serializer):
@@ -30,7 +30,7 @@ class SignupSerializer(serializers.Serializer):
                 raise serializers.ValidationError(_("The code {code} is invalid.").format(**{"code": code}))
 
     def validate_username(self, username):
-        msg = SignupValidator.clean_username(username)
+        msg = Validator.clean_username(username)
 
         if msg:
             raise serializers.ValidationError(msg)
@@ -38,7 +38,7 @@ class SignupSerializer(serializers.Serializer):
         return username
 
     def validate_email(self, email):
-        msg = SignupValidator.clean_email(email)
+        msg = Validator.clean_email(email)
 
         if msg:
             raise serializers.ValidationError(msg)
@@ -51,11 +51,37 @@ class SignupSerializer(serializers.Serializer):
             raise serializers.ValidationError(_("Signup is currently closed."))
 
         if data['password'] > data['password_confirm']:
-            msg = SignupValidator.compare_passwords(data["password"], 
-                                                    data["password_confirm"])
+            msg = Validator.compare_passwords(data["password"], 
+                                              data["password_confirm"])
 
             if msg:
                 raise serializers.ValidationError(msg)
 
         return data
 
+class SettingsSerializer(serializers.Serializer):
+    email = serializers.EmailField(label=_("Email"))
+    timezone = serializers.ChoiceField(
+        label=_("Timezone"),
+        choices=[("", "---------")] + settings.ACCOUNT_TIMEZONES,
+        required=False,
+        allow_blank=True
+    )
+    if settings.USE_I18N:
+        language = serializers.ChoiceField(
+            label=_("Language"),
+            choices=settings.ACCOUNT_LANGUAGES,
+            required=False,
+            allow_blank=True
+        )
+
+    def validate_email(self, email):
+        if self.context.get("email") == email:
+            return email
+
+        msg = Validator.clean_email(email)
+
+        if msg:
+            raise serializers.ValidationError(msg)
+
+        return email

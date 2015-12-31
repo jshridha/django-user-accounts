@@ -15,7 +15,7 @@ from django.contrib import auth
 from account.conf import settings
 from account.hooks import hookset
 from account.models import EmailAddress
-from account.validators import SignupValidator
+from account.validators import Validator
 
 
 class SignupForm(forms.Form):
@@ -46,7 +46,7 @@ class SignupForm(forms.Form):
 
     def clean_username(self):
         username = self.cleaned_data["username"]
-        msg = SignupValidator.clean_username(username)
+        msg = Validator.clean_username(username)
 
         if msg:
             raise forms.ValidationError(msg)
@@ -55,7 +55,7 @@ class SignupForm(forms.Form):
 
     def clean_email(self):
         email = self.cleaned_data["email"]
-        msg = SignupValidator.clean_email(email)
+        msg = Validator.clean_email(email)
 
         if msg:
             raise forms.ValidationError(msg)
@@ -64,8 +64,8 @@ class SignupForm(forms.Form):
 
     def clean(self):
         if "password" in self.cleaned_data and "password_confirm" in self.cleaned_data:
-            msg = SignupValidator.compare_passwords(self.cleaned_data["password"], 
-                                                    self.cleaned_data["password_confirm"])
+            msg = Validator.compare_passwords(self.cleaned_data["password"], 
+                                              self.cleaned_data["password_confirm"])
 
             if msg:
                 raise forms.ValidationError(msg)
@@ -211,7 +211,9 @@ class SettingsForm(forms.Form):
         value = self.cleaned_data["email"]
         if self.initial.get("email") == value:
             return value
-        qs = EmailAddress.objects.filter(email__iexact=value)
-        if not qs.exists() or not settings.ACCOUNT_EMAIL_UNIQUE:
-            return value
-        raise forms.ValidationError(_("A user is registered with this email address."))
+        msg = Validator.clean_email(email)
+
+        if msg:
+            raise serializers.ValidationError(msg)
+
+        return email
