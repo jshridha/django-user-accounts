@@ -60,7 +60,7 @@ class SignupView(FormView):
         try:
             self.signup_code = SignupCode.check_code(self.get_code())
         except SignupCode.InvalidCode:
-            self.signnup_code = None
+            self.signup_code = None
         return super(SignupView, self).dispatch(request, *args, **kwargs)
 
     def get(self, *args, **kwargs):
