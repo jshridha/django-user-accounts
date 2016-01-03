@@ -8,6 +8,9 @@ from account.conf import settings
 from account.validators import Validator
 from account.models import SignupCode
 
+class DeleteAccountResponseSerializer(serializers.Serializer):
+    expunge_hours = serializers.IntegerField()
+
 class SignupResponseSerializer(serializers.Serializer):
     confirmation_email_sent = serializers.BooleanField(default=False)
     email_confirmation_required = serializers.BooleanField(default=False)

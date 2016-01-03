@@ -4,7 +4,8 @@ from rest_framework.test import APITestCase
 
 from django.contrib.auth.models import User
 
-from account.models import Account, EmailAddress, SignupCode
+from account.conf import settings
+from account.models import Account, AccountDeletion, EmailAddress, SignupCode
 from account.services import SignupService
 
 class RESTSignupViewTestCase(APITestCase):
@@ -224,3 +225,25 @@ class RESTSettingsViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, {'language': [u'"NOT_A_LANGUAGE" is not a valid choice.']})
         
+class RESTDeleteAccountViewTestCase(APITestCase):
+    def test_delete_not_logged_in(self):
+        url = reverse('account_delete_api')
+        response = self.client.delete(url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete(self):
+        SignupService.signup('foo', 'foobar@example.com', 'bar')
+        user = User.objects.get(username='foo')
+        self.client.force_authenticate(user=user)
+
+
+        url = reverse('account_delete_api')
+        response = self.client.delete(url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.data["expunge_hours"], settings.ACCOUNT_DELETION_EXPUNGE_HOURS)
+
+        user = User.objects.get(username='foo')
+        self.assertEqual(AccountDeletion.objects.get(user=user).email, 'foobar@example.com')
+        self.assertEqual(user.is_active, False)
