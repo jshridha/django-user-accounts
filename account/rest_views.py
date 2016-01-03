@@ -2,18 +2,33 @@ from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
 from django.http import Http404
+from django.contrib import auth
 from django.contrib.sites.shortcuts import get_current_site
 
 from account import signals
 from account.conf import settings
-from account.serializers import SignupSerializer, SignupResponseSerializer, SettingsSerializer
+from account.serializers import SignupSerializer, SignupResponseSerializer
+from account.serializers import SettingsSerializer, DeleteAccountResponseSerializer
 from account.services import SignupService, SettingsService
-from account.models import EmailAddress
+from account.models import EmailAddress, AccountDeletion
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
+
+class AccountRestView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def delete(self, request, format=None):
+        AccountDeletion.mark(self.request.user)
+        auth.logout(self.request)
+
+        response = DeleteAccountResponseSerializer(data={'expunge_hours': 
+                                                         settings.ACCOUNT_DELETION_EXPUNGE_HOURS})
+        response.is_valid()
+
+        return Response(response.data, status=status.HTTP_202_ACCEPTED)
 
 class SignupRestView(APIView):
     """
