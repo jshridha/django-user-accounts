@@ -17,10 +17,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 
-class AccountRestView(APIView):
+class AccountDeleteRestView(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def delete(self, request, format=None):
+    def post(self, request, format=None):
         AccountDeletion.mark(self.request.user)
         auth.logout(self.request)
 

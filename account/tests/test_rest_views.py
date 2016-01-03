@@ -226,20 +226,20 @@ class RESTSettingsViewTestCase(APITestCase):
         self.assertEqual(response.data, {'language': [u'"NOT_A_LANGUAGE" is not a valid choice.']})
         
 class RESTDeleteAccountViewTestCase(APITestCase):
-    def test_delete_not_logged_in(self):
+    def test_post_not_logged_in(self):
         url = reverse('account_delete_api')
-        response = self.client.delete(url, format='json')
+        response = self.client.post(url, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_delete(self):
+    def test_post(self):
         SignupService.signup('foo', 'foobar@example.com', 'bar')
         user = User.objects.get(username='foo')
         self.client.force_authenticate(user=user)
 
 
         url = reverse('account_delete_api')
-        response = self.client.delete(url, format='json')
+        response = self.client.post(url, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(response.data["expunge_hours"], settings.ACCOUNT_DELETION_EXPUNGE_HOURS)
