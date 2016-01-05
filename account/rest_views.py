@@ -7,15 +7,41 @@ from django.contrib.sites.shortcuts import get_current_site
 
 from account import signals
 from account.conf import settings
+
 from account.serializers import SignupSerializer, SignupResponseSerializer
 from account.serializers import SettingsSerializer, DeleteAccountResponseSerializer
+from account.serializers import InviteCodeSerializer, SignupCodeSerializer
 from account.services import SignupService, SettingsService
-from account.models import EmailAddress, AccountDeletion
+from account.models import EmailAddress, AccountDeletion, SignupCode
+from account.rest_permissions import AllowUserInitiatedSiteInvitations
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
+
+class SignupCodeRestView(APIView):
+    permission_classes = (IsAuthenticated,AllowUserInitiatedSiteInvitations)
+
+    def post(self, request, format=None):
+        serializer = InviteCodeSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            kwargs = serializer.data
+            kwargs["inviter"] = request.user
+
+            if "check_exists" in serializer.data:
+                import pdb; pdb.set_trace()
+            signup_code = SignupCode.create(**kwargs)
+      
+            # Raise Signal & Send email
+            if serializer.data["send"] == True and signup_code:
+                signup_code.send(**serializer.data)
+
+            response = SignupCodeSerializer(signup_code)
+            return Response(response.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AccountDeleteRestView(APIView):
     permission_classes = (IsAuthenticated,)

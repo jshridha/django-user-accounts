@@ -8,6 +8,23 @@ from account.conf import settings
 from account.validators import Validator
 from account.models import SignupCode
 
+class InviteCodeSerializer(serializers.Serializer):
+    email = serializers.EmailField(label=_("Email"), required=False)
+    code = serializers.CharField(label=_("Code"), max_length=64, required=False)
+    check_exists = serializers.BooleanField(required=False)
+    expiry = serializers.IntegerField(label=_("Expiration (hours)"), required=False)
+    max_uses = serializers.IntegerField(label=_("Max Uses"), required=False)
+    notes = serializers.CharField(label=_("Notes"), required=False) 
+    send = serializers.BooleanField(label=_("Send Invitation"), required=False, default=False)
+    signup_url = serializers.CharField(label=_("Signup URL"), required=False) 
+
+class SignupCodeSerializer(serializers.ModelSerializer):
+    inviter = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = SignupCode
+        fields = '__all__'
+    
 class DeleteAccountResponseSerializer(serializers.Serializer):
     expunge_hours = serializers.IntegerField()
 

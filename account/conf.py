@@ -56,6 +56,7 @@ class AccountAppConf(AppConf):
     TIMEZONES = TIMEZONES
     LANGUAGES = LANGUAGES
     USE_AUTH_AUTHENTICATE = False
+    ALLOW_USER_INITIATED_INVITE = False
 
     def configure_deletion_mark_callback(self, value):
         return load_path_attr(value)

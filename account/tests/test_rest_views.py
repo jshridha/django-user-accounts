@@ -8,6 +8,73 @@ from account.conf import settings
 from account.models import Account, AccountDeletion, EmailAddress, SignupCode
 from account.services import SignupService
 
+class RESTSignupInviteViewTestCase(APITestCase):
+    def test_without_auth(self):
+        with self.settings(ALLOW_USER_INITIATED_INVITE=True):
+            url = reverse('account_invite_api')
+            response = self.client.get(url, format='json')
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_without_send(self):
+        with self.settings(ALLOW_USER_INITIATED_INVITE=True):
+            SignupService.signup('foo', 'foobar@example.com', 'bar')
+            user = User.objects.get(username='foo')
+            self.client.force_authenticate(user=user)
+
+            url = reverse('account_invite_api')
+            data = {
+                "email": "foobar@example.com",
+            }
+            response = self.client.post(url, data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+            self.assertEqual(response.data["email"], "foobar@example.com")
+            self.assertIsNone(response.data["sent"])
+
+
+    def test_with_send(self):
+        with self.settings(ALLOW_USER_INITIATED_INVITE=True):
+            SignupService.signup('foo', 'foobar@example.com', 'bar')
+            user = User.objects.get(username='foo')
+            self.client.force_authenticate(user=user)
+
+            url = reverse('account_invite_api')
+            data = {
+                "email": "foobar@example.com",
+                "send": True,
+            }
+            response = self.client.post(url, data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+            self.assertEqual(response.data["email"], "foobar@example.com")
+            self.assertIsNotNone(response.data["sent"])
+
+    def test_already_exists(self):
+        sc = SignupCode()
+        sc.code = "FOOFOOFOOFOO"
+        sc.email = 'foobar@example.com'
+        sc.save()
+
+        with self.settings(ALLOW_USER_INITIATED_INVITE=True):
+            SignupService.signup('foo', 'foobar@example.com', 'bar')
+            user = User.objects.get(username='foo')
+            self.client.force_authenticate(user=user)
+
+            url = reverse('account_invite_api')
+            data = {
+                "email": "foobar@example.com",
+                "check_exists": True,
+            }
+            response = self.client.post(url, data, format='json')
+            import pdb; pdb.set_trace()
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_user_invite_not_allowed(self):
+        url = reverse('account_invite_api')
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
 class RESTSignupViewTestCase(APITestCase):
 
     def test_post(self):

@@ -143,3 +143,8 @@ See full list in: https://github.com/pinax/django-user-accounts/blob/master/acco
 =================================
 
 Default: ``False``
+
+``ALLOW_USER_INITIATED_INVITE``
+=================================
+
+Default: ``False``
