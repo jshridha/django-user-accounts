@@ -8,15 +8,17 @@ from account.conf import settings
 from account.validators import Validator
 from account.models import SignupCode
 
+
 class InviteCodeSerializer(serializers.Serializer):
     email = serializers.EmailField(label=_("Email"), required=False)
     code = serializers.CharField(label=_("Code"), max_length=64, required=False)
-    check_exists = serializers.BooleanField(required=False)
+    check_exists = serializers.BooleanField(default=True, required=False)
     expiry = serializers.IntegerField(label=_("Expiration (hours)"), required=False)
     max_uses = serializers.IntegerField(label=_("Max Uses"), required=False)
-    notes = serializers.CharField(label=_("Notes"), required=False) 
+    notes = serializers.CharField(label=_("Notes"), required=False)
     send = serializers.BooleanField(label=_("Send Invitation"), required=False, default=False)
-    signup_url = serializers.CharField(label=_("Signup URL"), required=False) 
+    signup_url = serializers.CharField(label=_("Signup URL"), required=False)
+
 
 class SignupCodeSerializer(serializers.ModelSerializer):
     inviter = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -24,19 +26,22 @@ class SignupCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SignupCode
         fields = '__all__'
-    
+
+
 class DeleteAccountResponseSerializer(serializers.Serializer):
     expunge_hours = serializers.IntegerField()
+
 
 class SignupResponseSerializer(serializers.Serializer):
     confirmation_email_sent = serializers.BooleanField(default=False)
     email_confirmation_required = serializers.BooleanField(default=False)
 
+
 class SignupSerializer(serializers.Serializer):
     username = serializers.CharField(label=_("Username"), max_length=30)
-    password = serializers.CharField(label=_("Password"), 
+    password = serializers.CharField(label=_("Password"),
                                      style={'input_type': 'password'})
-    password_confirm = serializers.CharField(label=_("Password (again)"), 
+    password_confirm = serializers.CharField(label=_("Password (again)"),
                                              style={'input_type': 'password'})
     email = serializers.EmailField(label=_("Email"))
     code = serializers.CharField(max_length=64, required=False)
@@ -71,13 +76,14 @@ class SignupSerializer(serializers.Serializer):
             raise serializers.ValidationError(_("Signup is currently closed."))
 
         if data['password'] > data['password_confirm']:
-            msg = Validator.compare_passwords(data["password"], 
+            msg = Validator.compare_passwords(data["password"],
                                               data["password_confirm"])
 
             if msg:
                 raise serializers.ValidationError(msg)
 
         return data
+
 
 class SettingsSerializer(serializers.Serializer):
     email = serializers.EmailField(label=_("Email"))

@@ -8,6 +8,7 @@ from account.conf import settings
 from account.models import Account, AccountDeletion, EmailAddress, SignupCode
 from account.services import SignupService
 
+
 class RESTSignupInviteViewTestCase(APITestCase):
     def test_without_auth(self):
         with self.settings(ALLOW_USER_INITIATED_INVITE=True):
@@ -30,7 +31,6 @@ class RESTSignupInviteViewTestCase(APITestCase):
 
             self.assertEqual(response.data["email"], "foobar@example.com")
             self.assertIsNone(response.data["sent"])
-
 
     def test_with_send(self):
         with self.settings(ALLOW_USER_INITIATED_INVITE=True):
@@ -66,8 +66,7 @@ class RESTSignupInviteViewTestCase(APITestCase):
                 "check_exists": True,
             }
             response = self.client.post(url, data, format='json')
-            import pdb; pdb.set_trace()
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_user_invite_not_allowed(self):
         url = reverse('account_invite_api')
@@ -116,7 +115,7 @@ class RESTSignupViewTestCase(APITestCase):
             }
             response = self.client.post(url, data, format='json')
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            self.assertEqual(response.data, {"non_field_errors":["Signup is currently closed."]})
+            self.assertEqual(response.data, {"non_field_errors": ["Signup is currently closed."]})
 
     def test_email_validation_required(self):
         with self.settings(ACCOUNT_EMAIL_CONFIRMATION_REQUIRED=True):
@@ -208,7 +207,8 @@ class RESTSignupViewTestCase(APITestCase):
             }
             response = self.client.post(url, data, format='json')
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            self.assertEqual(response.data, {"code":['The code abc123 is invalid.']})
+            self.assertEqual(response.data, {"code": ['The code abc123 is invalid.']})
+
 
 class RESTSettingsViewTestCase(APITestCase):
     def test_get_not_logged_in(self):
@@ -291,7 +291,8 @@ class RESTSettingsViewTestCase(APITestCase):
         response = self.client.put(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, {'language': [u'"NOT_A_LANGUAGE" is not a valid choice.']})
-        
+
+
 class RESTDeleteAccountViewTestCase(APITestCase):
     def test_post_not_logged_in(self):
         url = reverse('account_delete_api')
@@ -303,7 +304,6 @@ class RESTDeleteAccountViewTestCase(APITestCase):
         SignupService.signup('foo', 'foobar@example.com', 'bar')
         user = User.objects.get(username='foo')
         self.client.force_authenticate(user=user)
-
 
         url = reverse('account_delete_api')
         response = self.client.post(url, format='json')

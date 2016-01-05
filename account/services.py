@@ -1,7 +1,8 @@
-from account.models import SignupCode, EmailAddress, Account
+from account.models import EmailAddress, Account
 from account.conf import settings
 
 from django.contrib.auth import get_user_model
+
 
 class SignupService():
 
@@ -59,10 +60,11 @@ class SignupService():
 
         return EmailAddress.objects.add_email(user, user.email, **kwargs)
 
+
 class SettingsService():
     @staticmethod
     def update_email(user, email, previous_email, confirm=None):
-        """ 
+        """
         update a users email address.  email should be just the address
         while previous_email should be the EmailAddress object of the users
         existing primary email

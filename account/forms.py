@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-import re
-
 try:
     from collections import OrderedDict
 except ImportError:
@@ -64,7 +62,7 @@ class SignupForm(forms.Form):
 
     def clean(self):
         if "password" in self.cleaned_data and "password_confirm" in self.cleaned_data:
-            msg = Validator.compare_passwords(self.cleaned_data["password"], 
+            msg = Validator.compare_passwords(self.cleaned_data["password"],
                                               self.cleaned_data["password_confirm"])
 
             if msg:
@@ -211,9 +209,9 @@ class SettingsForm(forms.Form):
         value = self.cleaned_data["email"]
         if self.initial.get("email") == value:
             return value
-        msg = Validator.clean_email(email)
+        msg = Validator.clean_email(value)
 
         if msg:
-            raise serializers.ValidationError(msg)
+            raise forms.ValidationError(msg)
 
-        return email
+        return value

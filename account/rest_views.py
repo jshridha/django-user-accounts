@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
-from django.http import Http404
 from django.contrib import auth
 from django.contrib.sites.shortcuts import get_current_site
 
@@ -20,28 +19,31 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 
+
 class SignupCodeRestView(APIView):
-    permission_classes = (IsAuthenticated,AllowUserInitiatedSiteInvitations)
+    permission_classes = (IsAuthenticated, AllowUserInitiatedSiteInvitations)
 
     def post(self, request, format=None):
         serializer = InviteCodeSerializer(data=request.data)
-        
+
         if serializer.is_valid():
             kwargs = serializer.data
             kwargs["inviter"] = request.user
 
-            if "check_exists" in serializer.data:
-                import pdb; pdb.set_trace()
-            signup_code = SignupCode.create(**kwargs)
-      
+            try:
+                signup_code = SignupCode.create(**kwargs)
+            except SignupCode.AlreadyExists:
+                return Response({'msg': _('Invite Code already exists for email address')}, status=status.HTTP_400_BAD_REQUEST)
+
             # Raise Signal & Send email
-            if serializer.data["send"] == True and signup_code:
+            if serializer.data["send"] is True and signup_code:
                 signup_code.send(**serializer.data)
 
             response = SignupCodeSerializer(signup_code)
             return Response(response.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class AccountDeleteRestView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -50,11 +52,12 @@ class AccountDeleteRestView(APIView):
         AccountDeletion.mark(self.request.user)
         auth.logout(self.request)
 
-        response = DeleteAccountResponseSerializer(data={'expunge_hours': 
+        response = DeleteAccountResponseSerializer(data={'expunge_hours':
                                                          settings.ACCOUNT_DELETION_EXPUNGE_HOURS})
         response.is_valid()
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
+
 
 class SignupRestView(APIView):
     """
@@ -64,7 +67,7 @@ class SignupRestView(APIView):
 
     def post(self, request, format=None):
         serializer = SignupSerializer(data=request.data)
-        
+
         if serializer.is_valid():
             username = serializer.data["username"]
             email = serializer.data["email"]
@@ -72,7 +75,7 @@ class SignupRestView(APIView):
             signup_code = serializer.context.get("signup_code", None)
             response = {}
 
-            user, email_address = SignupService.signup(username, email, password, 
+            user, email_address = SignupService.signup(username, email, password,
                                                        signup_code)
 
             self.after_signup(user, serializer.data)
@@ -96,6 +99,7 @@ class SignupRestView(APIView):
     def after_signup(self, user, data):
         signals.user_signed_up.send(sender=SignupRestView, user=user, form=data)
 
+
 class SettingsRestView(APIView):
     permission_classes = (IsAuthenticated,)
 
@@ -109,8 +113,8 @@ class SettingsRestView(APIView):
 
     def put(self, request, format=None):
         primary_email_address = EmailAddress.objects.get_primary(request.user)
-        
-        serializer = SettingsSerializer(data=request.data, 
+
+        serializer = SettingsSerializer(data=request.data,
                                         context={'email': primary_email_address.email})
 
         if serializer.is_valid():
@@ -129,7 +133,7 @@ class SettingsRestView(APIView):
 
     def update_email(self, user, email, primary_email_address, confirm=None):
         SettingsService.update_email(user, email, primary_email_address, confirm)
- 
+
     def update_account(self, serializer):
         fields = {}
         if "timezone" in serializer.data:
@@ -151,4 +155,3 @@ class SettingsRestView(APIView):
         data["language"] = user.account.language
 
         return data
-

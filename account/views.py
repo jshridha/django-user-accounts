@@ -20,9 +20,9 @@ from account.forms import ChangePasswordForm, PasswordResetForm, PasswordResetTo
 from account.forms import SettingsForm
 from account.hooks import hookset
 from account.mixins import LoginRequiredMixin
-from account.models import SignupCode, EmailAddress, EmailConfirmation, Account, AccountDeletion
+from account.models import SignupCode, EmailAddress, EmailConfirmation, AccountDeletion
 from account.utils import default_redirect, get_form_data
-from account.services import SignupService
+from account.services import SignupService, SettingsService
 
 
 class SignupView(FormView):

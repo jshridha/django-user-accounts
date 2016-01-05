@@ -2,6 +2,7 @@ from rest_framework import permissions
 
 from account.conf import settings
 
+
 class AllowUserInitiatedSiteInvitations(permissions.BasePermission):
     """
     Permission that checks if users can send site invitations
