@@ -76,7 +76,7 @@ class SignupSerializer(serializers.Serializer):
             raise serializers.ValidationError(_("Signup is currently closed."))
 
         if data['password'] > data['password_confirm']:
-            msg = Validator.compare_passwords(data["password"], 
+            msg = Validator.compare_passwords(data["password"],
                                               data["password_confirm"])
 
             if msg:
