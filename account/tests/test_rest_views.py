@@ -14,7 +14,7 @@ class RESTSignupInviteViewTestCase(APITestCase):
         with self.settings(ALLOW_USER_INITIATED_INVITE=True):
             url = reverse('account_invite_api')
             response = self.client.get(url, format='json')
-            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_without_send(self):
         with self.settings(ALLOW_USER_INITIATED_INVITE=True):
@@ -71,7 +71,7 @@ class RESTSignupInviteViewTestCase(APITestCase):
     def test_user_invite_not_allowed(self):
         url = reverse('account_invite_api')
         response = self.client.get(url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class RESTSignupViewTestCase(APITestCase):
@@ -216,7 +216,7 @@ class RESTSettingsViewTestCase(APITestCase):
 
         response = self.client.get(url, format='json')
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_get(self):
         SignupService.signup('foo', 'foobar@example.com', 'bar')
@@ -297,8 +297,7 @@ class RESTDeleteAccountViewTestCase(APITestCase):
     def test_post_not_logged_in(self):
         url = reverse('account_delete_api')
         response = self.client.post(url, format='json')
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_post(self):
         SignupService.signup('foo', 'foobar@example.com', 'bar')
