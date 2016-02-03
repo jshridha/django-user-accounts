@@ -336,6 +336,7 @@ class EmailConfirmation(models.Model):
     def send(self, **kwargs):
         current_site = kwargs["site"] if "site" in kwargs else Site.objects.get_current()
         protocol = getattr(settings, "DEFAULT_HTTP_PROTOCOL", "http")
+
         activate_url = "{0}://{1}{2}".format(
             protocol,
             current_site.domain,

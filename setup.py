@@ -15,8 +15,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "django-appconf>=1.0.1",
-        "pytz>=2015.6",
-        "djangorestframework>=3.3.2"
+        "pytz>=2015.6"
     ],
     zip_safe=False,
     package_data={
